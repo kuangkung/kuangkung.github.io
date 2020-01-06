@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.0.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="中车项目 gRPC 使用说明文档（Java客户端）    1 版本更新记录 2 准备工作 3 通过 protoc 插件生成实体类 4 通过 protoc、protoc-gen-grpc-java 两个插件生成客户端代码 5 编写调用 gRPC 接口的类和方法 6 pack &amp;amp; unpack 6.1 pack 6.2 unpack   7 本项目中的 gRPC 接口调用描述以及说明   &amp;e">
+<meta name="keywords" content="Java,gRPC">
+<meta property="og:type" content="article">
+<meta property="og:title" content="gRPC 使用过程文档">
+<meta property="og:url" content="kuangkung.top/2020/01/06/gRPC-使用过程文档/index.html">
+<meta property="og:site_name" content="kuangkung">
+<meta property="og:description" content="中车项目 gRPC 使用说明文档（Java客户端）    1 版本更新记录 2 准备工作 3 通过 protoc 插件生成实体类 4 通过 protoc、protoc-gen-grpc-java 两个插件生成客户端代码 5 编写调用 gRPC 接口的类和方法 6 pack &amp;amp; unpack 6.1 pack 6.2 unpack   7 本项目中的 gRPC 接口调用描述以及说明   &amp;e">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/kuangkung/forPicGo/master/2019/image-20200104155746182.png">
+<meta property="og:updated_time" content="2020-01-06T08:27:19.616Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="gRPC 使用过程文档">
+<meta name="twitter:description" content="中车项目 gRPC 使用说明文档（Java客户端）    1 版本更新记录 2 准备工作 3 通过 protoc 插件生成实体类 4 通过 protoc、protoc-gen-grpc-java 两个插件生成客户端代码 5 编写调用 gRPC 接口的类和方法 6 pack &amp;amp; unpack 6.1 pack 6.2 unpack   7 本项目中的 gRPC 接口调用描述以及说明   &amp;e">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/kuangkung/forPicGo/master/2019/image-20200104155746182.png">
+
+
+
+
+
+
+  <link rel="canonical" href="kuangkung.top/2020/01/06/gRPC-使用过程文档/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>gRPC 使用过程文档 | kuangkung</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">kuangkung</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+  
+  
+  
+  
+
+  
+
+  <a href="https://github.com/kuangkung" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewbox="0 0 250 250" style="fill: #222; color: #fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></a>
+
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="kuangkung.top/2020/01/06/gRPC-使用过程文档/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="kuangkung">
+      <meta itemprop="description" content="My hexo blog.">
+      <meta itemprop="image" content="https://raw.githubusercontent.com/kuangkung/forPicGo/master/2019/profile-header.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="kuangkung">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">gRPC 使用过程文档
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-01-06 16:05:08 / 修改时间：16:27:19" itemprop="dateCreated datePublished" datetime="2020-01-06T16:05:08+08:00">2020-01-06</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2><center>中车项目 gRPC 使用说明文档（Java客户端）</center></h2>
+
+<!-- TOC -->
+<ul>
+<li><a href="#1-%e7%89%88%e6%9c%ac%e6%9b%b4%e6%96%b0%e8%ae%b0%e5%bd%95">1 版本更新记录</a></li>
+<li><a href="#2-%e5%87%86%e5%a4%87%e5%b7%a5%e4%bd%9c">2 准备工作</a></li>
+<li><a href="#3-%e9%80%9a%e8%bf%87-protoc-%e6%8f%92%e4%bb%b6%e7%94%9f%e6%88%90%e5%ae%9e%e4%bd%93%e7%b1%bb">3 通过 protoc 插件生成实体类</a></li>
+<li><a href="#4-%e9%80%9a%e8%bf%87-protocprotoc-gen-grpc-java-%e4%b8%a4%e4%b8%aa%e6%8f%92%e4%bb%b6%e7%94%9f%e6%88%90%e5%ae%a2%e6%88%b7%e7%ab%af%e4%bb%a3%e7%a0%81">4 通过 protoc、protoc-gen-grpc-java 两个插件生成客户端代码</a></li>
+<li><a href="#5-%e7%bc%96%e5%86%99%e8%b0%83%e7%94%a8-grpc-%e6%8e%a5%e5%8f%a3%e7%9a%84%e7%b1%bb%e5%92%8c%e6%96%b9%e6%b3%95">5 编写调用 gRPC 接口的类和方法</a></li>
+<li><a href="#6-pack-amp-unpack">6 pack &amp; unpack</a><ul>
+<li><a href="#61-pack">6.1 pack</a></li>
+<li><a href="#62-unpack">6.2 unpack</a></li>
+</ul>
+</li>
+<li><a href="#7-%e6%9c%ac%e9%a1%b9%e7%9b%ae%e4%b8%ad%e7%9a%84-grpc-%e6%8e%a5%e5%8f%a3%e8%b0%83%e7%94%a8%e6%8f%8f%e8%bf%b0%e4%bb%a5%e5%8f%8a%e8%af%b4%e6%98%8e">7 本项目中的 gRPC 接口调用描述以及说明</a></li>
+</ul>
+<!-- /TOC -->
+<p>&emsp;&emsp;项目中使用了 gRPC 进行通信，在本 Java 项目中，gRPC 以客户端的形式存在。于是首先需要使用工具根据已有的 *.proto 文件生成相应的 Java 实体类代码和客户端代码。</p>
+<a id="more"></a>
+<h3 id="1-版本更新记录"><a href="#1-版本更新记录" class="headerlink" title="1 版本更新记录"></a>1 版本更新记录</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">日期</th>
+<th style="text-align:center">修改人</th>
+<th style="text-align:center">更改摘要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">2020年01月06日</td>
+<td style="text-align:center">kuangkung</td>
+<td style="text-align:center">初稿</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-准备工作"><a href="#2-准备工作" class="headerlink" title="2 准备工作"></a>2 准备工作</h3><ul>
+<li>在 <a href="https://github.com/protocolbuffers/protobuf/releases" target="_blank" rel="noopener">https://github.com/protocolbuffers/protobuf/releases</a> 下载对应版本的 protoc 工具解压，本项目使用的是3.1.0版本。</li>
+<li>将 *.proto 文件以及 protoc-gen-grpc-java 插件拷贝至 protoc插件所在目录，如下图所示。</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/kuangkung/forPicGo/master/2019/image-20200104155746182.png" alt="image-20200104155746182"></p>
+<h3 id="3-通过-protoc-插件生成实体类"><a href="#3-通过-protoc-插件生成实体类" class="headerlink" title="3 通过 protoc 插件生成实体类"></a>3 通过 protoc 插件生成实体类</h3><p>&emsp;&emsp;在 protoc 插件所在目录打开命令行工具，输入以下命令并运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.\protoc.exe --java_out=./ *.proto</span><br></pre></td></tr></table></figure>
+<h3 id="4-通过-protoc、protoc-gen-grpc-java-两个插件生成客户端代码"><a href="#4-通过-protoc、protoc-gen-grpc-java-两个插件生成客户端代码" class="headerlink" title="4 通过 protoc、protoc-gen-grpc-java 两个插件生成客户端代码"></a>4 通过 protoc、protoc-gen-grpc-java 两个插件生成客户端代码</h3><p>&emsp;&emsp;在 protoc 插件所在目录打开命令行工具，输入以下命令并运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.\protoc.exe --plugin=protoc-gen-grpc-java=protoc-gen-grpc-java.exe --grpc-java_out=./ *.proto</span><br></pre></td></tr></table></figure>
+<h3 id="5-编写调用-gRPC-接口的类和方法"><a href="#5-编写调用-gRPC-接口的类和方法" class="headerlink" title="5 编写调用 gRPC 接口的类和方法"></a>5 编写调用 gRPC 接口的类和方法</h3><p>&emsp;&emsp;将上述两步生成的代码文件导入到项目中。接下来要写一个类去调用 gRPC 的 *.proto 文件中定义的接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WrapperService</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ManagedChannel channel;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ModelServiceGrpc.ModelServiceBlockingStub blockingStub;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">WrapperService</span><span class="params">(String host, <span class="keyword">int</span> port)</span></span>&#123;</span><br><span class="line">        channel = ManagedChannelBuilder.forAddress(host,port)</span><br><span class="line">                .maxInboundMessageSize(<span class="number">1000</span> * <span class="number">1024</span> * <span class="number">1024</span>) <span class="comment">// 设置传输数据最大值</span></span><br><span class="line">                .usePlaintext(<span class="keyword">true</span>)</span><br><span class="line">                .build();</span><br><span class="line"></span><br><span class="line">        blockingStub = ModelServiceGrpc.newBlockingStub(channel);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">shutdown</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">        channel.shutdown().awaitTermination(<span class="number">5</span>, TimeUnit.SECONDS);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * RunModel</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> runRequest</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> RunModelResponse <span class="title">runModel</span><span class="params">(RunModelRequest runRequest)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> blockingStub.runModel(runRequest);</span><br><span class="line">    &#125;</span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;上面代码块中展示的调用 runModel 方法对应了 .proto 文件中定义的 RunModel 服务接口，如下所示：</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">service</span> <span class="title">ModelService</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">rpc</span> RegisterLocalModel(ModelRoot) <span class="keyword">returns</span> (Model) &#123;&#125;</span></span><br><span class="line"><span class="function">  <span class="keyword">rpc</span> DeleteModel(Model) <span class="keyword">returns</span> (Empty) &#123;&#125;</span></span><br><span class="line"><span class="function">  <span class="keyword">rpc</span> PrintModels(Empty) <span class="keyword">returns</span> (stream Model)&#123;&#125;</span></span><br><span class="line"><span class="function">  <span class="keyword">rpc</span> RunModel(RunModelRequest) <span class="keyword">returns</span> (RunModelResponse) &#123;&#125;</span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="6-pack-amp-unpack"><a href="#6-pack-amp-unpack" class="headerlink" title="6 pack &amp; unpack"></a>6 pack &amp; unpack</h3><p>&emsp;&emsp;gRPC 通信中传输的数据用到了一些自定义的数据对象，作为参数或者调用接口所返回的结果。以下是示例：</p>
+<h4 id="6-1-pack"><a href="#6-1-pack" class="headerlink" title="6.1 pack"></a>6.1 pack</h4><p>&emsp;&emsp;代码块1：</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">message</span> <span class="title">SingleValue</span></span>&#123;</span><br><span class="line">  <span class="built_in">string</span> value = <span class="number">1</span>;</span><br><span class="line">  <span class="built_in">string</span> default_value = <span class="number">2</span>;</span><br><span class="line">  ValueType value_type = <span class="number">3</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;代码块2：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> SingleValue <span class="title">singleValueBuilder</span><span class="params">(String value, ValueType vt)</span> </span>&#123;</span><br><span class="line">    SingleValue.Builder svBuilder = SingleValue.newBuilder();</span><br><span class="line">    svBuilder.setValue(value);</span><br><span class="line">    svBuilder.setValueType(vt);</span><br><span class="line">    SingleValue sv = svBuilder.build();</span><br><span class="line">    <span class="keyword">return</span> sv;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">SingleValue sv = singleValueBuilder(<span class="string">"2.0f"</span>, ValueType.FLOAT);</span><br><span class="line">Any anyValue = Any.pack(sv);</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;代码块1为自定义的单个值的对象类型，代码块2定义了一个如何初始化 SingleValue 对象并赋值的方法，而后将 SingleValue 对象 pack 进 Any 对象。</p>
+<h4 id="6-2-unpack"><a href="#6-2-unpack" class="headerlink" title="6.2 unpack"></a>6.2 unpack</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">float</span> <span class="title">unpackValue2Float</span><span class="params">(Any message)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">float</span> result = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Value value = message.unpack(Value.class);</span><br><span class="line">        Any anyValue = value.getValue();</span><br><span class="line">        SingleValue singleValue = anyValue.unpack(SingleValue.class);</span><br><span class="line">        result = Float.parseFloat(singleValue.getValue());</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (InvalidProtocolBufferException e) &#123;</span><br><span class="line">        logger.error(<span class="string">"====== Unpack float value failed! ======"</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;上述代码块中，首先将 message unpack 成 Value 对象，Value 对象中 value 依然是 Any 类型，所以又进行了一次 unpack 操作，将 value unpack 成 SingleValue 对象，最后从 SingleValue 对象中解析出 float 值。</p>
+<h3 id="7-本项目中的-gRPC-接口调用描述以及说明"><a href="#7-本项目中的-gRPC-接口调用描述以及说明" class="headerlink" title="7 本项目中的 gRPC 接口调用描述以及说明"></a>7 本项目中的 gRPC 接口调用描述以及说明</h3><table>
+<thead>
+<tr>
+<th><strong>Modifier and Type</strong></th>
+<th><strong>Method and Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Boolean</em></td>
+<td><em>registerModel(String id)</em> <br>获取模型在 gRPC 服务端注册成功与否的结果<br> id 为算法管理页面添加模型成功时自动生成并插入数据库的UUID。<br>返回 true 表示注册成功， false 表示注册失败。</td>
+</tr>
+<tr>
+<td><em>ModelCallResult</em></td>
+<td><em>callGearWaveform(Map&lt;String, WaveformPac&gt; map, String wheelDiameter)</em><br>获取大齿轮波形，map 需要一个振动波形和一个转速波形，温度波形可选。<br>wheelDiameter 为车轮直径。<br>返回值为 ModelCallResult 对象。</td>
+</tr>
+<tr>
+<td><em>ModelCallResult</em></td>
+<td><em>callPinionWaveform(Map&lt;String, WaveformPac&gt; map, String wheelDiameter)</em><br>获取小齿轮波形，参数同 callGearWaveform(…)，返回值为 ModelCallResult 对象。</td>
+</tr>
+<tr>
+<td><em>ModelCallResult</em></td>
+<td><em>callBoxWaveform(Map&lt;String, WaveformPac&gt; map, String wheelDiameter)</em><br>获取箱体波形，map 需要两个振动波形和一个转速波形，温度波形可选。<br>wheelDiameter 为车轮直径。<br>返回值为 ModelCallResult 对象。</td>
+</tr>
+<tr>
+<td><em>WaveformPac</em></td>
+<td><em>callSpeedWaveform(Map&lt;String, WaveformPac&gt; map, String wheelDiameter)</em><br>获取速度波形，map 需要一个转速波形。<br>wheelDiameter 为车轮直径。<br>返回值为 WaveformPac 对象。</td>
+</tr>
+<tr>
+<td><em>ModelRecall</em></td>
+<td><em>experimentRecall(Map&lt;String, WaveformPac&gt; map, String wd, String expId)</em><br>重演试验过程中获取指定算法输出的试验波形。<br>map 需要四个振动波形，四个温度波形和一个转速波形。<br>wd 为车轮直径，expId 为新建该重演试验时生成的 UUID。<br>返回值为 ModelRecall 对象。</td>
+</tr>
+</tbody>
+</table>
+<p>&emsp;&emsp;各对象属性定义</p>
+<p>ModelCallResult.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ModelCallResult</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> gearMeshFrequency;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span>[] HNR;</span><br><span class="line">    <span class="keyword">private</span> WaveformPac envelope;</span><br><span class="line">    <span class="keyword">private</span> WaveformPac orderSpec;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> FR; <span class="comment">// 故障发生概率</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> FD; <span class="comment">// 故障描述</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> FA; <span class="comment">// 故障等级(0-7)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>WaveformPac.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WaveformPac</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">double</span> fs; <span class="comment">// waveform sample rate</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">double</span> t0; <span class="comment">// time that waveform start, return ms format timestamp</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">double</span>[] y_value; <span class="comment">// waveform y_value list</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ModelRecall.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ModelRecall</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> gearMeshFrequency; <span class="comment">// Mesh frequency of gearbox.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> speed; <span class="comment">// Speed of high-speed train.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span>[] gearHNR; <span class="comment">// HNR of gear.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span>[] pinionHNR;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span>[] boxHNR;</span><br><span class="line">    <span class="keyword">private</span> WaveformPac gearEnvelope;</span><br><span class="line">    <span class="keyword">private</span> WaveformPac pinionEnvelope;</span><br><span class="line">    <span class="keyword">private</span> WaveformPac boxEnvelope;</span><br><span class="line">    <span class="keyword">private</span> WaveformPac gearOrderSpec;</span><br><span class="line">    <span class="keyword">private</span> WaveformPac pinionOrderSpec;</span><br><span class="line">    <span class="keyword">private</span> WaveformPac boxOrderSpec;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> gearFR; <span class="comment">// 故障发生概率 Failure ratio of gear.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> pinionFR;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> boxFR;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> gearFD; <span class="comment">// 故障描述 Failure digit of gear.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> pinionFD;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> boxFD;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> gearFA; <span class="comment">// 故障等级(0-7) Failure level</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> pinionFA;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> boxFA;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> gearTemp; <span class="comment">// Temperature.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> pinionTemp;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> boxTemp;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> box2Temp;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> gearTempDiff; <span class="comment">// Difference in temperature.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> pinionTempDiff;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> boxTempDiff;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> box2TempDiff;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> gearTempRise; <span class="comment">// Temperature rise.</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> pinionTempRise;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> boxTempRise;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">float</span> box2TempRise;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/gRPC/" rel="tag"># gRPC</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/25/AngularJS select 首项空白问题解决方案/" rel="next" title="AngularJS select 首项空白问题解决方案">
+                <i class="fa fa-chevron-left"></i> AngularJS select 首项空白问题解决方案
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="https://raw.githubusercontent.com/kuangkung/forPicGo/master/2019/profile-header.jpg" alt="kuangkung">
+            
+              <p class="site-author-name" itemprop="name">kuangkung</p>
+              <div class="site-description motion-element" itemprop="description">My hexo blog.</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">标签</span>
+                  
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/kuangkung" title="GitHub &rarr; https://github.com/kuangkung" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:kuangcuixia@outlook.com" title="E-Mail &rarr; mailto:kuangcuixia@outlook.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://twitter.com/youaresobeaut11" title="Twitter &rarr; https://twitter.com/youaresobeaut11" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://www.facebook.com/kuangcuixia" title="FB Page &rarr; https://www.facebook.com/kuangcuixia" rel="noopener" target="_blank"><i class="fa fa-fw fa-facebook"></i>FB Page</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#undefined"><span class="nav-number">1.</span> <span class="nav-text">中车项目 gRPC 使用说明文档（Java客户端）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-版本更新记录"><span class="nav-number">1.1.</span> <span class="nav-text">1 版本更新记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-准备工作"><span class="nav-number">1.2.</span> <span class="nav-text">2 准备工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-通过-protoc-插件生成实体类"><span class="nav-number">1.3.</span> <span class="nav-text">3 通过 protoc 插件生成实体类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-通过-protoc、protoc-gen-grpc-java-两个插件生成客户端代码"><span class="nav-number">1.4.</span> <span class="nav-text">4 通过 protoc、protoc-gen-grpc-java 两个插件生成客户端代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-编写调用-gRPC-接口的类和方法"><span class="nav-number">1.5.</span> <span class="nav-text">5 编写调用 gRPC 接口的类和方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-pack-amp-unpack"><span class="nav-number">1.6.</span> <span class="nav-text">6 pack &amp; unpack</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#6-1-pack"><span class="nav-number">1.6.1.</span> <span class="nav-text">6.1 pack</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-2-unpack"><span class="nav-number">1.6.2.</span> <span class="nav-text">6.2 unpack</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-本项目中的-gRPC-接口调用描述以及说明"><span class="nav-number">1.7.</span> <span class="nav-text">7 本项目中的 gRPC 接口调用描述以及说明</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">kuangkung</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="139, 90, 0" opacity="0.7" zindex="-1" count="66" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.1"></script>
+
+  <script src="/js/src/motion.js?v=7.0.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/affix.js?v=7.0.1"></script>
+
+  <script src="/js/src/schemes/pisces.js?v=7.0.1"></script>
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.1"></script>
+<script src="/js/src/post-details.js?v=7.0.1"></script>
+
+
+
+  
+
+
+  <script src="/js/src/next-boot.js?v=7.0.1"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+  <script type="text/javascript" src="//cdn.bootcss.com/canvas-nest.js/1.0.0/canvas-nest.min.js"></script>
+  
+
+</body>
+</html>
